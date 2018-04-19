@@ -50,7 +50,20 @@ var app = new Vue({
           isStage: false,
           onlineDate: '2018年4月20日',
           onlineTime: '16:00'
-        },     
+        }, 
+        {
+          id: '14453',
+          weight: 30,
+          img: 'https://al-qn-echo-image-cdn.app-echo.com/Fv3h0a1B6corVBHA5ntqHU5QxU3a?imageMogr2/auto-orient/quality/100%7CimageView2/0/w/500/q/100',
+          name: '不知道是谁反正就是封面啊啊啊啊啊',
+          // status 0 表示未上线  1 表示上线
+          status: 0,
+          type: '频道',
+          sounds: '8首',
+          isStage: false,
+          onlineDate: '2018年4月20日',
+          onlineTime: '20:00'
+        }
       ],
       edit: {
         editing: false,
