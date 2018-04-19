@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>推荐管理</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="element/index.css">
+  <link rel="stylesheet" type="text/css" media="screen" href="css/index.css" />
+</head>
+<body>
+  <div id="app">
+    <main class="recommend">
+      <!-- 查询条件 -->
+      <!-- <section class="query-box">
+        <section class="query-criteria">
+
+          <div class="query-input">
+            <span>名称:</span>
+            <el-input
+              placeholder="请输入内容名称"
+              v-model="query.name"
+              clearable>
+            </el-input>
+          </div>
+
+          <div class="query-input">
+            <span>ID:</span>
+            <el-input
+              placeholder="请输入内容ID"
+              v-model="query.id"
+              clearable>
+            </el-input>
+          </div>
+
+          <div class="query-input">
+            <span>类型:</span>
+            <el-select v-model="query.type" placeholder="请选择">
+              <el-option
+                v-for="item in query.types"
+                :key="item"
+                :label="item"
+                :value="item">
+              </el-option>
+            </el-select>
+          </div>
+
+          <div class="query-input">
+            <span>时间:</span>
+            <el-date-picker
+              v-model="query.date"
+              type="date"
+              :picker-options="timeOptions"
+              placeholder="选择日期">
+            </el-date-picker>
+          </div>
+
+          <div class="query-input">
+            <span>版本:</span>
+            <el-select v-model="query.version" placeholder="请选择">
+              <el-option
+                v-for="item in query.versions"
+                :key="item"
+                :label="item"
+                :value="item">
+              </el-option>
+            </el-select>
+          </div>
+
+          <div class="query-input">
+            <span>版块:</span>
+            <el-select v-model="query.block" placeholder="请选择">
+              <el-option
+                v-for="item in query.blocks"
+                :key="item"
+                :label="item"
+                :value="item">
+              </el-option>
+            </el-select>
+          </div>
+
+          <div class="query-input">
+            <span>测试环境:</span>
+            <el-select v-model="query.isTest" placeholder="请选择">
+              <el-option
+                v-for="item in boolean"
+                :key="item.key"
+                :label="item.name"
+                :value="item.key">
+              </el-option>
+            </el-select>
+          </div>
+
+        </section>
+
+        <section class="query-submit">
+          <el-button type="primary" @click="querySubmit">查询</el-button>
+        </section>
+      </section> -->
+      <section class="recommend-item special-channel">
+
+        <section class="tab-title">
+          <div class="item-name">
+            <p class="title">特色频道</p>
+            <span class="total">共{{special.total}}条数据</span>
+          </div>
+          <section class="item-query">
+            <div class="query-input">
+              <span>时间:</span>
+              <el-date-picker
+                v-model="special.query.date"
+                type="date"
+                :picker-options="timeOptions"
+                placeholder="选择日期">
+              </el-date-picker>
+            </div>
+
+            <div class="query-input">
+              <span>版本:</span>
+              <el-select v-model="special.query.version" placeholder="请选择">
+                <el-option
+                  v-for="item in query.versions"
+                  :key="item"
+                  :label="item"
+                  :value="item">
+                </el-option>
+              </el-select>
+            </div>
+
+            <!-- 特色频道添加弹窗 -->
+            <div class="query-submit">
+              <el-button type="primary" v-popover:popover1>
+                添加
+                <i class="el-icon-caret-bottom" :class="[special.addSelect ? 'rotate180' : '']"></i>
+              </el-button>
+              <el-popover
+                ref="popover1"
+                placement="bottom"
+                width="80"
+                v-model="special.addSelect"
+              >
+                <div class="add-list">
+                  <p v-for="item in special.addList" :key="item" @click="addSpecial(item)">{{item}}</p>
+                </div>
+              </el-popover>
+            </div>
+          </section>
+        </section>
+
+        <!-- 特色频道表格展示 -->
+        <section class="tab-table">
+          <el-table
+            :data="special.list"
+            style="width: 100%"
+            v-loading="special.loading"
+          >
+            <el-table-column
+              prop="weight"
+              label="权重值"
+              width="100">
+              <template slot-scope="scope">
+                <p v-if="special.edit.isWeight && special.edit.id === scope.row.id" class="edit-weight">
+                  <el-input-number :min="0" v-model="weight" ref="weight" size="small" placeholder="权重值" controls-position="right" @blur="endWeight('special')"></el-input-number>
+                </p>
+                <p v-else>
+                  <span>{{scope.row.weight}}</span>
+                  <span class="edit-weight-icon" @click="editWeight('special', scope.row)"><i class="el-icon-edit"></i></span>
+                </p>
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="id"
+              label="ID"
+              width="100">
+            </el-table-column>
+            <el-table-column
+              prop="img"
+              label="封面"
+              width="100">
+              <template slot-scope="scope">
+                <img :src="scope.row.img" alt="封面图" class="img-cover">
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="name"
+              label="名称"
+              width="180">
+            </el-table-column>
+            <el-table-column
+              prop="status"
+              label="状态"
+              width="120">
+              <template slot-scope="scope">
+                <span v-if="scope.row.status === 1">已上线</span>
+                <div v-else class="no-online">
+                  <span>未上线</span>
+                  <span>{{scope.row.onlineDate}}</span>
+                  <span>{{scope.row.onlineTime}}</span>                  
+                </div>    
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="type"
+              label="类型"
+              width="80">
+            </el-table-column>
+            <el-table-column
+              prop="sounds"
+              label="新增回声"
+              width="100">
+            </el-table-column>
+            <el-table-column
+              prop="isStage"
+              label="测试环境"
+              width="100">
+              <template slot-scope="scope">
+                {{scope.row.isStage ? '是' : '否'}}
+              </template>
+            </el-table-column>
+            <el-table-column
+              label="操作"
+              width="140">
+              <template slot-scope="scope">
+                <p class="item-control">
+                  <span>编辑</span>
+                  <span>移除</span>
+                </p>
+              </template>
+            </el-table-column>
+          </el-table>
+        </section>
+      </section>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="element/index.js"></script>
+  <script src="index.js"></script>
+</body>
+</html>
