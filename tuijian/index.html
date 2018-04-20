@@ -140,7 +140,7 @@
                 v-model="special.addSelect"
               >
                 <div class="add-list">
-                  <p v-for="item in special.addList" :key="item" @click="addSpecial(item)">{{item}}</p>
+                  <p v-for="item in special.addList" :key="item.type" @click="adding('special', item.type)">{{item.name}}</p>
                 </div>
               </el-popover>
             </div>
@@ -160,7 +160,7 @@
               width="100">
               <template slot-scope="scope">
                 <p v-if="special.edit.isWeight && special.edit.id === scope.row.id" class="edit-weight">
-                  <el-input-number :min="0" v-model="weight" ref="weight" size="small" placeholder="权重值" controls-position="right" @blur="endWeight('special')"></el-input-number>
+                  <el-input-number :min="0" v-model="weight" ref="weight" size="small" placeholder="权重值" controls-position="right" @keyup.enter.native="endWeight('special')" @blur="endWeight('special')"></el-input-number>
                 </p>
                 <p v-else>
                   <span>{{scope.row.weight}}</span>
@@ -203,6 +203,9 @@
               prop="type"
               label="类型"
               width="80">
+              <template slot-scope="scope">
+                  {{scope.row.type === 'channel' ? '频道' : '广告'}}
+                </template>
             </el-table-column>
             <el-table-column
               prop="sounds"
@@ -222,18 +225,126 @@
               width="140">
               <template slot-scope="scope">
                 <p class="item-control">
-                  <span>编辑</span>
+                  <span @click="adding('special', scope.row.type, scope.row)">编辑</span>
                   <span>移除</span>
                 </p>
               </template>
             </el-table-column>
           </el-table>
         </section>
+
+        <!-- 添加子项的弹框 -->
+        <el-dialog :visible.sync="special.edit.adding" @close="specialClose">
+          <section slot="title" class="add-title">
+            <p v-if="special.edit.type === 'channel'">
+              <span>{{special.edit.editing ? '编辑' : '添加'}}</span>特色频道
+            </p>
+            <p v-if="special.edit.type === 'advertisement'">添加广告</p>            
+          </section>      
+          <section class="add-content" v-if="special.edit.type === 'channel'">
+            <!-- 搜索频道 -->
+            <div class="search-channel">
+              <div class="add-input search">
+                <span class="need">频道ID: </span>
+                <el-input
+                  type="number"
+                  min="0"
+                  placeholder="输入频道ID进行搜索"
+                  @keyup.enter.native="chooseChannel('special', 'channel')"
+                  v-model.trim="special.edit.addObj.channel.id">
+                </el-input>
+                <i class="el-input__icon el-icon-search" @click="chooseChannel('special', 'channel')"></i>                
+              </div>
+            </div>
+            <section class="add-form">
+              <div class="add-left">
+                <!-- 搜索完成展示框 -->
+                <div class="search-content" v-loading="searchChannel.searchStatus === 1">
+                  <section v-if="searchChannel.id">
+                    <div class="add-input">
+                      <span>名称:</span>
+                      <p>{{searchChannel.name}}</p>
+                    </div>
+                    <div class="add-input describe">
+                      <span>描述:</span>
+                      <p class="describe-text">{{searchChannel.describe}}</p>
+                    </div>
+                  </section>
+                  <section class="search-waiting" v-else>
+                    <p v-if="searchChannel.searchStatus === 0">请先搜索频道, 获取频道信息</p>
+                    <p v-if="searchChannel.searchStatus === 1">搜索中..</p>
+                    <p v-if="searchChannel.searchStatus === 3">频道不存在, 请尝试输入其他频道id进行搜索</p>                    
+                  </section>
+                </div>
+                
+                <!-- 用户可以填写的 -->
+                <div class="add-input">
+                  <span class="need">版本:</span>
+                  <el-select v-model="special.edit.addObj.channel.version" placeholder="请选择">
+                    <el-option
+                      v-for="item in query.versions"
+                      :key="item"
+                      :label="item"
+                      :value="item">
+                    </el-option>
+                  </el-select>
+                </div>
+
+                <div class="add-input">
+                  <span class="need">测试环境:</span>
+                  <el-select v-model="special.edit.addObj.channel.isStage" placeholder="请选择">
+                    <el-option
+                      v-for="item in query.boolean"
+                      :key="item.key"
+                      :label="item.name"
+                      :value="item.key">
+                    </el-option>
+                  </el-select>
+                </div>
+
+                <div class="add-input">
+                  <span class="need">时间:</span>
+                  <el-date-picker
+                    v-model="special.edit.addObj.channel.online"
+                    type="datetime"
+                    :picker-options="timeOptions"
+                    placeholder="选择日期">
+                  </el-date-picker>
+                </div>
+
+                <div class="add-input">
+                  <span>权重值: </span>
+                  <el-input
+                    type="number"
+                    min="0"
+                    placeholder="请输入权重值"
+                    v-model.trim="special.edit.addObj.channel.weight">
+                  </el-input>              
+                </div>
+
+              </div>
+              <div class="add-right">
+                <img :src="searchChannel.img" alt="searchChannel.name" v-if="searchChannel.id">
+              </div>
+            </section>
+          </section>
+          <section class="add-content" v-if="special.edit.type === 'advertisement'">    
+            广告添加区域        
+          </section>
+          <section class="add-footer">
+            <el-button type="primary" size="small" :loading="special.edit.loading" @click="addSpecialItem('channel')">
+                {{special.edit.editing ? '保存' : '添加'}}
+            </el-button>
+            <el-button type="info" size="small" @click="cancelModel('special')">取消</el-button>
+          </section>
+        </el-dialog>
       </section>
     </main>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
   <script src="element/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.5/lodash.min.js"></script>
+  <script src="http://momentjs.cn/downloads/moment.js"></script>
   <script src="index.js"></script>
 </body>
 </html>
