@@ -171,12 +171,12 @@
             <el-table-column
               prop="id"
               label="ID"
-              width="100">
+              width="90">
             </el-table-column>
             <el-table-column
               prop="img"
               label="封面"
-              width="100">
+              width="90">
               <template slot-scope="scope">
                 <img :src="scope.row.img" alt="封面图" class="img-cover">
               </template>
@@ -226,7 +226,7 @@
               <template slot-scope="scope">
                 <p class="item-control">
                   <span @click="adding('special', scope.row.type, scope.row)">编辑</span>
-                  <span>移除</span>
+                  <span @click="remove('special', scope.row)">移除</span>
                 </p>
               </template>
             </el-table-column>

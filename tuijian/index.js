@@ -33,50 +33,7 @@ var app = new Vue({
           type: 'advertisement'
         }
       ],
-      list: [
-        {
-          id: '13327',
-          weight: 100,
-          img: 'https://al-qn-echo-image-cdn.app-echo.com/9474fc6a867b0fd3bff0ad7bc95c0ae9.png?imageMogr2/auto-orient/quality/100%7CimageView2/0/w/200/q/100',
-          name: '周杰伦专场',
-          // status 0 表示未上线  1 表示上线
-          status: 1,
-          type: 'channel',
-          sounds: '8首',
-          isStage: false,
-          online: 'Fri Apr 20 2018 20:00:00 GMT+0800 (CST)',
-          onlineDate: '2018年4月20日',
-          onlineTime: '18:00'
-        },
-        {
-          id: '15560',
-          weight: 98,
-          img: 'https://qn-qn-echo-image-cdn.app-echo.com/Fs9L4RTK70VEZmcRvvYaAvF41YWy?imageMogr2/auto-orient/quality/100%7CimageView2/0/w/200/q/100',
-          name: '林俊杰专场',
-          // status 0 表示未上线  1 表示上线
-          status: 0,
-          type: 'channel',
-          sounds: '8首',
-          isStage: false,
-          online: 'Fri Apr 20 2018 20:00:00 GMT+0800 (CST)',          
-          onlineDate: '2018年4月20日',
-          onlineTime: '16:00'
-        }, 
-        {
-          id: '14453',
-          weight: 30,
-          img: 'https://al-qn-echo-image-cdn.app-echo.com/Fv3h0a1B6corVBHA5ntqHU5QxU3a?imageMogr2/auto-orient/quality/100%7CimageView2/0/w/500/q/100',
-          name: '不知道是谁反正就是封面啊啊啊啊啊',
-          // status 0 表示未上线  1 表示上线
-          status: 0,
-          type: 'advertisement',
-          sounds: '8首',
-          isStage: false,
-          online: 'Fri Apr 20 2018 20:00:00 GMT+0800 (CST)',          
-          onlineDate: '2018年4月20日',
-          onlineTime: '20:00'
-        }
-      ],
+      list: [],
       edit: {
         editing: false,
         adding: false,
@@ -119,8 +76,9 @@ var app = new Vue({
   },  
   methods: {
     // 添加通用方法
-    adding: function (op, type, item) {
+    adding: function (op, type, row) {
       this.resetSearch()
+      console.log(type)
       // var obj = JSON.parse(JSON.stringify(this[op]))
       var obj = _.assign({}, this[op])  
       obj.addSelect = false
@@ -129,28 +87,63 @@ var app = new Vue({
       obj.edit.loading = false
       obj.edit.type = type
       // 如果有id 表示是编辑状态
-      if (item && item.id) {
+      if (row) {
         obj.edit.editing = true
-        obj.edit.addObj[type] = _.assign({}, item)
-        obj.edit.id = item.id        
+        obj.edit.addObj[type] = _.assign({}, row)
+        obj.edit.id = row.id        
         this.searchChannel = {
           searchStatus: 2,
-          id: item.id,
-          name: item.name,
-          describe: item.describe,
-          img: item.img
+          id: row.id,
+          name: row.name,
+          describe: row.describe,
+          img: row.img
         }
       }
       this[op] = obj
     },
+
+    remove: function (op, row) {
+      this.$confirm('确认删除, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // 执行删除
+        var list = [].concat(this[op].list)
+        _.remove(list, function (item) {
+          return item.id === row.id
+        })
+        this[op].list = list
+        this.msg('删除成功', 'success')
+      }).catch(() => {
+        this.msg('已取消删除', 'info')        
+      })
+    },
+
     // 获取列表数据通用方法
     getData: function (options) {
-      var  _ = this
+      var that = this
       console.log(options)
-      _[options].loading = true
+      that[options].loading = true
       setTimeout(function () {
-        _[options].loading = false
-      }, 500)
+        if (options === 'special') {
+          that.getSpecialData()
+        }
+        that[options].loading = false
+      }, 1000)
+    },
+
+    // 获取特色频道
+    getSpecialData () {
+      var that = this
+      var data = mockData 
+      var list = _.map(mockData.special, function (o) {
+        o.onlineDate = that.resetTime(o.online, 'year')
+        o.onlineTime = that.resetTime(o.online, 'time')
+        o.status = Date.now() > Date.parse(o.online) ? 1 : 0
+        return o
+      })
+      this.special.list = list
     },
 
     // 编辑权重值
@@ -169,11 +162,11 @@ var app = new Vue({
     },
 
     endWeight: function (op) {
-      var _ = this
+      var that = this
       var weight = ~~this.weight
       var obj = Object.assign(this[op])
       // 处理数据 赋值修改的权重值
-      obj.list = obj.list.map(function (val, index) {
+      obj.list = _.map(obj.list, function (val, index) {
         val.weight = val.id === obj.edit.id ? weight : val.weight
         return val
       })
@@ -182,7 +175,7 @@ var app = new Vue({
         obj.edit.isWeight = false
         obj.loading = true
         // 执行排序
-        _.listSort(op)
+        that.listSort(op)
       })
     },
 
@@ -217,6 +210,7 @@ var app = new Vue({
 
     // 获取频道信息
     getChannelData: function (id) {
+      id = id.toString()
       var that = this
       if (this.searchChannel.searchStatus === 1) {
         return false
@@ -224,7 +218,7 @@ var app = new Vue({
       this.resetSearch()
       this.searchChannel.searchStatus = 1
       //模拟数据处理
-      var o = _.filter(data.channels, function (item) {
+      var o = _.filter(mockData.channels, function (item) {
         return item.id === id
       })
       setTimeout(function () {
@@ -251,15 +245,15 @@ var app = new Vue({
           this.msg('请选择频道')
           return false
         }
-        var obj = this.special.edit.addObj[child]
+        var obj = _.assign({}, this.special.edit.addObj[child])
         var o = {
           id: that.searchChannel.id,
           weight: obj.weight,
           img: that.searchChannel.img,
           name: that.searchChannel.name,
           // status 0 表示未上线  1 表示上线
-          status: 0,
-          type: obj.type,
+          status: Date.now() > Date.parse(obj.online) ? 1 : 0,
+          type: this.special.edit.type,
           sounds: '8首',
           isStage: obj.isStage,
           online: obj.online,
@@ -267,19 +261,31 @@ var app = new Vue({
           onlineTime: that.resetTime(obj.online, 'hour')
         }
         // 判断当前列表是否存在id
+        // 表示编辑的位置
         var i = _.findIndex(this.special.list, function (val) {
           return val.id === that.special.edit.id
         })
 
+        // 判断新增 编辑的是否存在于原始列表
+        var j = _.findIndex(this.special.list, function (val) {
+          return val.id === o.id
+        })
+
         if (this.special.edit.editing) {
-          this.special.list[i] = o
-        } else {
-          if (i === -1) {
-            this.special.list.push(o)
-          } else {
+          // 如果edit id 和 o.id一样 表示没有新查询频道 只是编辑
+          if (j !== -1 && this.special.edit.id !== o.id) {
             this.msg('频道已经添加了')
             return false
           }
+          this.special.list[i] = o
+          this.msg('保存成功', 'success')          
+        } else {
+          if (j !== -1) {
+            this.msg('频道已经添加了')
+            return false
+          }
+          this.special.list.push(o)
+          this.msg('添加成功', 'success')          
         }
         this.listSort('special')
         this.special.edit.adding = false          
@@ -328,6 +334,10 @@ var app = new Vue({
       })    
     }
   },
+  mounted () {
+    // 获取特色频道数据
+    this.getData('special')
+  }
 })
 
 //监听特色频道  修改筛选条件 更新数据
@@ -347,19 +357,74 @@ app.$watch('special.query.version', function (newVal, oldVal) {
 
 
 // 模拟数据 mock
-var data = {
+var mockData = {
   channels: [
     {
-      id: 1,
+      id: '1',
       name: '3D音乐奇幻旋律馆',
       info: "echo独家3D音乐，颠覆你的听觉体验",
       pic: 'https://al-qn-echo-image-cdn.app-echo.com/FqQlWfVj9384hIaTVIjYgsVQsFdg'
     },
     {
-      id: 2,
+      id: '2',
       name: '欧美流行指南',
       info: "集结最新最精的欧美流行内容",
       pic: 'https://al-qn-echo-image-cdn.app-echo.com/Fp-e_oa1y0kZskHzdxSqQyLxhNvj'
+    },
+    {
+      id: '3',
+      name: '周杰伦专场',
+      info: '杰伦哥哥的音乐棒棒的',
+      pic: 'https://al-qn-echo-image-cdn.app-echo.com/9474fc6a867b0fd3bff0ad7bc95c0ae9.png?imageMogr2/auto-orient/quality/100%7CimageView2/0/w/200/q/100'
+    },
+    {
+      id: '4',
+      name: '林俊杰专场',
+      info: '超级爱jj',
+      pic: 'https://al-qn-echo-image-cdn.app-echo.com/9474fc6a867b0fd3bff0ad7bc95c0ae9.png?imageMogr2/auto-orient/quality/100%7CimageView2/0/w/200/q/100'
+    }
+  ],
+  special: [
+    {
+      id: '3',
+      weight: 100,
+      img: 'https://al-qn-echo-image-cdn.app-echo.com/9474fc6a867b0fd3bff0ad7bc95c0ae9.png?imageMogr2/auto-orient/quality/100%7CimageView2/0/w/200/q/100',
+      name: '周杰伦专场',
+      describe: '杰伦哥哥的音乐棒棒的',
+      // status 0 表示未上线  1 表示上线
+      status: 1,
+      type: 'channel',
+      sounds: '8首',
+      isStage: false,
+      version: '普通版',
+      online: 'Fri Apr 20 2018 20:00:00 GMT+0800 (CST)',
+    },
+    {
+      id: '4',
+      weight: 98,
+      img: 'https://qn-qn-echo-image-cdn.app-echo.com/Fs9L4RTK70VEZmcRvvYaAvF41YWy?imageMogr2/auto-orient/quality/100%7CimageView2/0/w/200/q/100',
+      name: '林俊杰专场',
+      describe: '超级爱jj',      
+      // status 0 表示未上线  1 表示上线
+      status: 0,
+      type: 'channel',
+      sounds: '8首',
+      isStage: false,
+      version: '普通版',      
+      online: 'Fri Apr 23 2018 20:00:00 GMT+0800 (CST)',          
+    }, 
+    {
+      id: '14453',
+      weight: 30,
+      img: 'https://al-qn-echo-image-cdn.app-echo.com/Fv3h0a1B6corVBHA5ntqHU5QxU3a?imageMogr2/auto-orient/quality/100%7CimageView2/0/w/500/q/100',
+      name: '不知道是谁反正就是封面啊啊啊啊啊',
+      // status 0 表示未上线  1 表示上线
+      status: 0,
+      type: 'advertisement',
+      sounds: '8首',
+      isStage: false,
+      version: '国际版',
+      online: 'Fri Apr 21 2018 20:00:00 GMT+0800 (CST)',          
     }
   ]
 }
