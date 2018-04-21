@@ -381,7 +381,7 @@ var mockData = {
       id: '4',
       name: '林俊杰专场',
       info: '超级爱jj',
-      pic: 'https://al-qn-echo-image-cdn.app-echo.com/9474fc6a867b0fd3bff0ad7bc95c0ae9.png?imageMogr2/auto-orient/quality/100%7CimageView2/0/w/200/q/100'
+      pic: 'https://qn-qn-echo-image-cdn.app-echo.com/Fs9L4RTK70VEZmcRvvYaAvF41YWy?imageMogr2/auto-orient/quality/100%7CimageView2/0/w/200/q/100'
     }
   ],
   special: [
