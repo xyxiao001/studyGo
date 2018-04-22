@@ -254,6 +254,7 @@ var app = new Vue({
           // status 0 表示未上线  1 表示上线
           status: Date.now() > Date.parse(obj.online) ? 1 : 0,
           type: this.special.edit.type,
+          version: obj.version,
           sounds: '8首',
           isStage: obj.isStage,
           online: obj.online,
