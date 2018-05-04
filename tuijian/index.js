@@ -99,7 +99,7 @@ var app = new Vue({
       if (row) {
         obj.edit.editing = true
         obj.edit.addObj[type] = _.assign({}, row)
-        obj.edit.id = row.id        
+        obj.edit.id = row.id
         this.searchChannel = {
           searchStatus: 2,
           id: row.id,
@@ -145,6 +145,7 @@ var app = new Vue({
       instance.get('/special').then(function (res) {
         var data = res.data.special
         var list = _.map(data, function (o) {
+          o.online = new Date(o.online)
           o.onlineDate = that.resetTime(o.online, 'year')
           o.onlineTime = that.resetTime(o.online, 'time')
           o.status = Date.now() > Date.parse(o.online) ? 1 : 0
