@@ -1,3 +1,9 @@
+// axios
+var instance = axios.create({
+  baseURL: 'https://www.easy-mock.com/mock/5aec12bc32ada312d6e49fb4/echo6.5'
+})
+
+
 var app = new Vue({
   el: '#app',
   data: {
@@ -52,6 +58,9 @@ var app = new Vue({
             isStage: false,
             online: new Date(Date.now() + 3600 * 1000),
             weight: 1
+          },
+          advertisement: {
+            
           }
         }
       }
@@ -125,25 +134,28 @@ var app = new Vue({
       var that = this
       console.log(options)
       that[options].loading = true
-      setTimeout(function () {
-        if (options === 'special') {
-          that.getSpecialData()
-        }
-        that[options].loading = false
-      }, 1000)
+      if (options === 'special') {
+        that.getSpecialData(options)
+      }
     },
 
     // 获取特色频道
     getSpecialData () {
       var that = this
-      var data = mockData 
-      var list = _.map(mockData.special, function (o) {
-        o.onlineDate = that.resetTime(o.online, 'year')
-        o.onlineTime = that.resetTime(o.online, 'time')
-        o.status = Date.now() > Date.parse(o.online) ? 1 : 0
-        return o
+      instance.get('/special').then(function (res) {
+        var data = res.data.special
+        var list = _.map(data, function (o) {
+          o.onlineDate = that.resetTime(o.online, 'year')
+          o.onlineTime = that.resetTime(o.online, 'time')
+          o.status = Date.now() > Date.parse(o.online) ? 1 : 0
+          return o
+        })
+        that.special.list = list
+        that.special.loading = false      
+      }).catch(function (error) {
+        that.msg('请求失败!')
+        that.special.loading = false      
       })
-      this.special.list = list
     },
 
     // 编辑权重值
